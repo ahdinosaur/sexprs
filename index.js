@@ -4,16 +4,12 @@ const set = require('set-in')
 
 var lexer = moo.compile({
   whitespace: {
-    match: /[ \t\n]+/,
+    match: /[\s]+/,
     lineBreaks: true
   },
-  number: {
-    match: /-?[0-9]+(?:\.[0-9]+)?/,
-    value: Number
-  },
-  symbol: /[^ \t\n()"]+/,
+  symbol: /[^\s"()]+/,
   string: {
-    match: /"(?:\\["\\]|[^\n"\\])*"/,
+    match: /"(?:\\["]|[^"])*"/,
     value: value => value.slice(1, -1)
   },
   listStart: '(',
@@ -109,11 +105,18 @@ function Sexprs (options = {}) {
         path.pop()
         argIndexes.pop()
       } else {
-        var nextValue = token.type === 'number' ? Number(token.value) : token.value
+        var nextValue = token.value
+        var numericValue = Number(nextValue)
+        if (!isNaN(numericValue)) {
+          console.log('numericValue', numericValue)
+          nextValue = numericValue
+        }
+
         let level = levels[levels.length - 1]
         console.log('level', level, JSON.stringify(object, null, 2))
+
         if (level.args != null) {
-          var argIndex = argIndexes[argIndexes.length - 1]
+          var argIndex = argIndexes[argIndexes.length - 1]++
           if (argIndex < level.args.length) {
             var nextKey = level.args[argIndex]
             set(object, [...path, nextKey], nextValue)
@@ -121,9 +124,9 @@ function Sexprs (options = {}) {
             throw new Error(lexer.formatError(token, 'More args than expected.'))
           }
         } else if (level.hasMany) {
-          set(object, [...path, '-'], token.value)
+          set(object, [...path, '-'], nextValue)
         } else {
-          set(object, [...path, '_', '-'], token.value)
+          set(object, [...path, '_', '-'], nextValue)
         }
       }
     }
