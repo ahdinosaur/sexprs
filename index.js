@@ -28,29 +28,6 @@ function Sexprs (options = {}) {
     stringify
   }
 
-  /*
-   * example
-   *
-   * (module
-   *    name
-   *    (version 1.0.0)
-   *    (author mikey)
-   *    (location 121 121)
-   *    (favorite chocolate)
-   *    (favorite sleep)
-   * )
-   *
-   * formats:
-   *   module:
-   *     args: ['name']
-   *   location:
-   *     args: ['lat', 'long']
-   *   favorite:
-   *     hasMany: true
-   *
-   *
-  */
-
   function parse (string) {
     lexer.reset(string)
 
@@ -60,35 +37,55 @@ function Sexprs (options = {}) {
     var argIndexes = []
     var isNextTokenKey = false
 
+    // iterate through tokens
     for (var token of lexer) {
       if (token.type === 'whitespace') {
+        // ignore whitespace
         continue
       } else if (token.type === 'listStart') {
+        // if start of list, next token is key
         isNextTokenKey = true
       } else if (isNextTokenKey) {
+        // if key,
+        //
         isNextTokenKey = false
 
+        // then must be symbol
         if (token.type !== 'symbol') {
           throw new Error(lexer.formatError(token, 'Expected symbol as first token after list start.'))
         }
 
+        // get format for level
         let level = formats[token.value]
         if (level == null) level = {}
         level = Object.assign(level, { key: token.value })
-        console.log('level', level)
 
+        // keep track of next level
         levels.push(level)
-        path.push(token.value)
         argIndexes.push(0)
 
+        // add value as key
+        path.push(token.value)
+
+        // if has many of this level
         if (level.hasMany) {
-          set(object, path, [])
-        } else {
-          set(object, path, { _: [] })
+          // add index as key
+          let sofar = get(object, path)
+          if (sofar == null) {
+            set(object, path, [])
+            path.push(0)
+          } else {
+            path.push(sofar.length)
+          }
         }
+
+        // start next object
+        set(object, path, { _: [] })
       } else if (token.type === 'listEnd') {
-        var sofar = get(object, path)
-        console.log('sofar', sofar)
+        // if end of list
+        //
+        let sofar = get(object, path)
+
         if (Object.keys(sofar).length === 1) {
           // if value at path has only _, then merge up
           if ('_' in sofar && sofar._.length === 1) {
@@ -96,24 +93,29 @@ function Sexprs (options = {}) {
           } else {
             set(object, path, sofar._)
           }
-        } else if (sofar._.length === 0) {
+        } else if ('_' in sofar && sofar._.length === 0) {
           // or if _ is empty, delete it
           delete sofar._
         }
 
-        levels.pop()
+        // clean up next level
+        //
+        var level = levels.pop()
+
+        // if has many of this level, remove index
+        if (level.hasMany) path.pop()
+
+        // remove tracked data
         path.pop()
         argIndexes.pop()
       } else {
         var nextValue = token.value
         var numericValue = Number(nextValue)
         if (!isNaN(numericValue)) {
-          console.log('numericValue', numericValue)
           nextValue = numericValue
         }
 
         let level = levels[levels.length - 1]
-        console.log('level', level, JSON.stringify(object, null, 2))
 
         if (level.args != null) {
           var argIndex = argIndexes[argIndexes.length - 1]++
@@ -123,8 +125,6 @@ function Sexprs (options = {}) {
           } else {
             throw new Error(lexer.formatError(token, 'More args than expected.'))
           }
-        } else if (level.hasMany) {
-          set(object, [...path, '-'], nextValue)
         } else {
           set(object, [...path, '_', '-'], nextValue)
         }

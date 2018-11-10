@@ -46,8 +46,12 @@ test('parse with defaults', function (t) {
       (version 1.0.0)
       (website http://dinosaur.is)
       (location 121 121)
-      (likes chocolate)
-      (likes JavaScript)
+      (likes
+        (name chocolate)
+      )
+      (likes
+        (name JavaScript)
+      )
     )
   `
   var object = sexprs.parse(author)
@@ -58,8 +62,8 @@ test('parse with defaults', function (t) {
       website: 'http://dinosaur.is',
       location: { lat: 121, long: 121 },
       likes: [
-        'chocolate',
-        'JavaScript'
+        { name: 'chocolate' },
+        { name: 'JavaScript' }
       ]
     }
   }
