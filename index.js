@@ -67,12 +67,15 @@ function Sexprs (options = {}) {
         argIndexes.push(0)
 
         // add value as key
+        //
         path.push(token.value)
+
+        // get current data
+        let sofar = get(object, path)
 
         // if has many of this level
         if (level.hasMany) {
           // add index as key
-          let sofar = get(object, path)
           if (sofar == null) {
             set(object, path, [])
             path.push(0)
@@ -86,6 +89,8 @@ function Sexprs (options = {}) {
       } else if (token.type === 'listEnd') {
         // if end of list
         //
+
+        // get current data
         let sofar = get(object, path)
 
         if (Object.keys(sofar).length === 1) {
@@ -126,21 +131,17 @@ function Sexprs (options = {}) {
         // get current level
         let level = levels[levels.length - 1]
 
-        // if has list of arguments
-        if (level.args != null) {
-          // get current argument index
-          var argIndex = argIndexes[argIndexes.length - 1]++
-          if (argIndex < level.args.length) {
-            // if keyed index, set object at value
-            var nextKey = level.args[argIndex]
-            set(object, [...path, nextKey], nextValue)
-          } else {
-            // if unknown key
-            throw new Error(lexer.formatError(token, 'More args than expected.'))
-          }
+        // get current argument index
+        var argIndex = argIndexes[argIndexes.length - 1]++
+
+        // if keyed index, set object at value
+        if (level.args != null && argIndex < level.args.length) {
+          var nextKey = level.args[argIndex]
+          set(object, [...path, nextKey], nextValue)
         } else {
+          // if unknown key
           // if no list of arguments, add to special _ list
-          set(object, [...path, '_', '-'], nextValue)
+          set(object, [...path, '_', argIndex], nextValue)
         }
       }
     }
