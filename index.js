@@ -2,26 +2,27 @@ const moo = require('moo')
 const get = require('get-in')
 const set = require('set-in')
 
-var lexer = moo.compile({
-  whitespace: {
-    match: /[\s]+/,
-    lineBreaks: true
-  },
-  symbol: /[^\s"()]+/,
-  string: {
-    match: /"(?:\\["]|[^"])*"/,
-    value: value => value.slice(1, -1)
-  },
-  listStart: '(',
-  listEnd: ')'
-})
-
 module.exports = Sexprs
 
 function Sexprs (options = {}) {
   const {
     formats = {}
   } = options
+
+  // setup s-expression parser
+  var lexer = moo.compile({
+    whitespace: {
+      match: /[\s]+/,
+      lineBreaks: true
+    },
+    symbol: /[^\s"()]+/,
+    string: {
+      match: /"(?:\\["]|[^"])*"/,
+      value: value => value.slice(1, -1)
+    },
+    listStart: '(',
+    listEnd: ')'
+  })
 
   return {
     parse,
@@ -31,6 +32,7 @@ function Sexprs (options = {}) {
   function parse (string) {
     lexer.reset(string)
 
+    // setup data to track
     var object = {}
     var path = []
     var levels = []
@@ -87,13 +89,15 @@ function Sexprs (options = {}) {
         let sofar = get(object, path)
 
         if (Object.keys(sofar).length === 1) {
-          // if value at path has only _, then merge up
-          if ('_' in sofar && sofar._.length === 1) {
+          // if has only special _ list
+          if (sofar._.length === 1) {
+            // if only one item in list, then set first value
             set(object, path, sofar._[0])
           } else {
+            // else then set list
             set(object, path, sofar._)
           }
-        } else if ('_' in sofar && sofar._.length === 0) {
+        } else if (sofar._.length === 0) {
           // or if _ is empty, delete it
           delete sofar._
         }
@@ -109,23 +113,33 @@ function Sexprs (options = {}) {
         path.pop()
         argIndexes.pop()
       } else {
+        // if value
+        //
         var nextValue = token.value
+
+        // convert value to number, if possible
         var numericValue = Number(nextValue)
         if (!isNaN(numericValue)) {
           nextValue = numericValue
         }
 
+        // get current level
         let level = levels[levels.length - 1]
 
+        // if has list of arguments
         if (level.args != null) {
+          // get current argument index
           var argIndex = argIndexes[argIndexes.length - 1]++
           if (argIndex < level.args.length) {
+            // if keyed index, set object at value
             var nextKey = level.args[argIndex]
             set(object, [...path, nextKey], nextValue)
           } else {
+            // if unknown key
             throw new Error(lexer.formatError(token, 'More args than expected.'))
           }
         } else {
+          // if no list of arguments, add to special _ list
           set(object, [...path, '_', '-'], nextValue)
         }
       }
