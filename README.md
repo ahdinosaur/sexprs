@@ -75,7 +75,7 @@ t.deepEqual(string, expectedString)
 
 ### `object = sexprs.parse(string)`
 
-### `string = sexprs.format(object)
+### `string = sexprs.format(object)`
 
 ## license
 
