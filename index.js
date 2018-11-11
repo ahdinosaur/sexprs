@@ -1,6 +1,6 @@
 const moo = require('moo')
-const get = require('get-in')
-const set = require('set-in')
+const { get, set, each } = require('libnested')
+const { isArray } = Array
 
 module.exports = Sexprs
 
@@ -57,13 +57,13 @@ function Sexprs (options = {}) {
           throw new Error(lexer.formatError(token, 'Expected symbol as first token after list start.'))
         }
 
-        // get format for level
+        // keep track of next level
         let level = formats[token.value]
         if (level == null) level = {}
         level = Object.assign(level, { key: token.value })
-
-        // keep track of next level
         levels.push(level)
+
+        // keep track of arguments
         argIndexes.push(0)
 
         // add value as key
@@ -149,6 +149,75 @@ function Sexprs (options = {}) {
     return object
   }
 
-  function stringify (object) {
+  function stringify (object, depth = 0) {
+    if (isString(object)) {
+      return indent(depth) + maybeQuoteString(object)
+    } else if (isNumber(object)) {
+      return indent(depth) + object.toString()
+    }
+
+    var strings = []
+    for (let [key, value] of Object.entries(object)) {
+      strings.push(`${indent(depth)}(${key}`)
+
+      let level = formats[key]
+      if (level == null) level = {}
+      level = Object.assign(level, { key })
+
+      if (value == null) {
+        strings.push(')')
+      } else if (isString(value) || isNumber(value)) {
+        strings.push(` ${stringify(value)})`)
+      } else {
+        var args = []
+        var kwargs = {}
+
+        if (isArray(value)) args = value
+        else {
+          kwargs = Object.assign({}, value)
+          if ('_' in value) {
+            args = value._
+            delete kwargs._
+          }
+        }
+
+        strings.push('\n')
+
+        args.forEach(arg => {
+          strings.push(`${stringify(arg, depth + 1)}\n`)
+        })
+
+        if (Object.keys(kwargs).length > 0) {
+          strings.push(`${stringify(kwargs, depth + 1)}`)
+        }
+
+        //strings.push(`${indent(depth)})`)
+        strings.push(`${indent(depth)})`)
+      }
+      strings.push('\n')
+    }
+    return strings.join('')
   }
+}
+
+function indent (depth) {
+  return ' '.repeat(depth * 2)
+}
+
+const isSymbolRe = /^[^\s"()]+$/
+
+function maybeQuoteString (value) {
+  if (isSymbolRe.test(value)) {
+    return `${value}`
+  } else {
+    return`"${value}"`
+  }
+}
+
+function isString (object) {
+  return typeof object === 'string'
+}
+  
+function isNumber (object) {
+  return typeof object === 'number'
 }
