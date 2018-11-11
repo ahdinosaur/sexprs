@@ -37,6 +37,7 @@ function Sexprs (options = {}) {
     var path = []
     var levels = []
     var argIndexes = []
+    var hadMany = []
     var isNextTokenKey = false
 
     // iterate through tokens
@@ -74,7 +75,8 @@ function Sexprs (options = {}) {
         let sofar = get(object, path)
 
         // if has many of this level
-        if (level.hasMany) {
+        if (hasMany(level, path)) {
+          hadMany.push(true)
           // add index as key
           if (sofar == null) {
             set(object, path, [])
@@ -82,6 +84,8 @@ function Sexprs (options = {}) {
           } else {
             path.push(sofar.length)
           }
+        } else {
+          hadMany.push(false)
         }
 
         // start next object
@@ -109,10 +113,10 @@ function Sexprs (options = {}) {
 
         // clean up next level
         //
-        var level = levels.pop()
+        levels.pop()
 
         // if has many of this level, remove index
-        if (level.hasMany) path.pop()
+        if (hadMany.pop()) path.pop()
 
         // remove tracked data
         path.pop()
@@ -149,24 +153,24 @@ function Sexprs (options = {}) {
     return object
   }
 
-  function stringify (object, depth = 0) {
+  function stringify (object, path = []) {
     if (isString(object)) {
-      return indent(depth) + maybeQuoteString(object)
+      return indent(path.length) + maybeQuoteString(object)
     } else if (isNumber(object)) {
-      return indent(depth) + object.toString()
+      return indent(path.length) + object.toString()
     }
 
     var strings = []
     for (let [key, value] of Object.entries(object)) {
-      const format = operators[key]
-      if (format != null && format.hasMany && isArray(value)) {
+      const operator = operators[key]
+      if (hasMany(operator, [...path, key]) && isArray(value)) {
         value.forEach(item => {
-          strings.push(`${stringify({ [key]: item }, depth)}`)
+          strings.push(`${stringify({ [key]: item }, path)}`)
         })
         continue
       }
 
-      strings.push(`${indent(depth)}(${key}`)
+      strings.push(`${indent(path.length)}(${key}`)
 
       if (value == null) {
         strings.push(')')
@@ -186,8 +190,8 @@ function Sexprs (options = {}) {
             delete kwargs._
           }
 
-          if (format != null && isArray(format.args)) {
-            format.args.forEach(argKey => {
+          if (operator != null && isArray(operator.args)) {
+            operator.args.forEach(argKey => {
               args.unshift(kwargs[argKey])
               delete kwargs[argKey]
             })
@@ -197,20 +201,27 @@ function Sexprs (options = {}) {
         strings.push('\n')
 
         args.forEach(arg => {
-          strings.push(`${stringify(arg, depth + 1)}\n`)
+          strings.push(`${stringify(arg, [...path, key])}\n`)
         })
 
         if (Object.keys(kwargs).length > 0) {
-          strings.push(`${stringify(kwargs, depth + 1)}`)
+          strings.push(`${stringify(kwargs, [...path, key])}`)
         }
 
-        // strings.push(`${indent(depth)})`)
-        strings.push(`${indent(depth)})`)
+        strings.push(`${indent(path.length)})`)
       }
       strings.push('\n')
     }
     return strings.join('')
   }
+}
+
+function hasMany (operator, path) {
+  if (operator == null) return false
+  if (typeof operator.hasMany === 'function') {
+    return operator.hasMany(path)
+  }
+  return Boolean(operator.hasMany)
 }
 
 function indent (depth) {

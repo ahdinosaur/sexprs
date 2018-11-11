@@ -7,7 +7,7 @@ test('Sexprs', function (t) {
   t.truthy(Sexprs, 'module is require-able')
 })
 
-test('parse with defaults', function (t) {
+test('defaults', function (t) {
   var sexprs = Sexprs()
   var inputString = dent`
     (hello
@@ -34,7 +34,7 @@ test('parse with defaults', function (t) {
   t.deepEqual(string, expectedString)
 })
 
-test('parse with defaults', function (t) {
+test('basic operators', function (t) {
   var sexprs = Sexprs({
     operators: {
       person: {
@@ -76,6 +76,50 @@ test('parse with defaults', function (t) {
         { name: 'chocolate' },
         { name: 'JavaScript' }
       ]
+    }
+  }
+  t.deepEqual(object, expectedObject)
+
+  var string = sexprs.stringify(expectedObject)
+  var expectedString = inputString + '\n'
+  t.deepEqual(string, expectedString)
+})
+
+test('hasMany(path)', function (t) {
+  var sexprs = Sexprs({
+    operators: {
+      thing: {
+        hasMany: (path) => {
+          return path.length === 3
+        }
+      }
+    }
+  })
+  var inputString = dent`
+    (root
+      (thing
+        (name pie)
+      )
+      (related
+        (thing
+          (name mince)
+        )
+        (thing
+          (name cheese)
+        )
+      )
+    )
+  `
+  var object = sexprs.parse(inputString)
+  var expectedObject = {
+    root: {
+      thing: { name: 'pie' },
+      related: {
+        thing: [
+          { name: 'mince' },
+          { name: 'cheese' }
+        ]
+      }
     }
   }
   t.deepEqual(object, expectedObject)
