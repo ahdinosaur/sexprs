@@ -37,6 +37,7 @@ var inputString = `
     (likes (name JavaScript))
   )
 `
+// parse string into object
 var object = sexprs.parse(inputString)
 var expectedObject = {
   person: {
@@ -51,6 +52,11 @@ var expectedObject = {
   }
 }
 t.deepEqual(object, expectedObject)
+
+// stringify object back into string
+var string = sexprs.stringify(expectedObject)
+var expectedString = inputString + '\n'
+t.deepEqual(string, expectedString)
 ```
 
 ## usage
