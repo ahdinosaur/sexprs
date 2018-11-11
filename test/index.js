@@ -36,7 +36,7 @@ test('parse with defaults', function (t) {
 
 test('parse with defaults', function (t) {
   var sexprs = Sexprs({
-    formats: {
+    operators: {
       person: {
         args: ['name']
       },

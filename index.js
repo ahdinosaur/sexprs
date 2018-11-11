@@ -6,7 +6,7 @@ module.exports = Sexprs
 
 function Sexprs (options = {}) {
   const {
-    formats = {}
+    operators = {}
   } = options
 
   // setup s-expression parser
@@ -58,7 +58,7 @@ function Sexprs (options = {}) {
         }
 
         // keep track of next level
-        let level = formats[token.value]
+        let level = operators[token.value]
         if (level == null) level = {}
         level = Object.assign(level, { key: token.value })
         levels.push(level)
@@ -158,7 +158,7 @@ function Sexprs (options = {}) {
 
     var strings = []
     for (let [key, value] of Object.entries(object)) {
-      const format = formats[key]
+      const format = operators[key]
       if (format != null && format.hasMany && isArray(value)) {
         value.forEach(item => {
           strings.push(`${stringify({ [key]: item }, depth)}`)

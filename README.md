@@ -16,7 +16,7 @@ i also think S-expressions are a cool file format, maybe i'll use them for somet
 
 ```js
 var sexprs = Sexprs({
-  formats: {
+  operators: {
     person: {
       args: ['name']
     },
@@ -61,7 +61,7 @@ t.deepEqual(object, expectedObject)
 
 `options` is object with keys:
 
-- `formats`: an object where
+- `operators`: an object where
   - keys are names of S-expression operators (the first symbol after an open parentheses)
   - values are objects with possible keys:
     - `args`: how to interpret indexed arguments as keys
