@@ -1,5 +1,5 @@
 const moo = require('moo')
-const { get, set, each } = require('libnested')
+const { get, set } = require('libnested')
 const { isArray } = Array
 
 module.exports = Sexprs
@@ -158,11 +158,15 @@ function Sexprs (options = {}) {
 
     var strings = []
     for (let [key, value] of Object.entries(object)) {
-      strings.push(`${indent(depth)}(${key}`)
+      const format = formats[key]
+      if (format != null && format.hasMany && isArray(value)) {
+        value.forEach(item => {
+          strings.push(`${stringify({ [key]: item }, depth)}`)
+        })
+        continue
+      }
 
-      let level = formats[key]
-      if (level == null) level = {}
-      level = Object.assign(level, { key })
+      strings.push(`${indent(depth)}(${key}`)
 
       if (value == null) {
         strings.push(')')
@@ -172,12 +176,21 @@ function Sexprs (options = {}) {
         var args = []
         var kwargs = {}
 
-        if (isArray(value)) args = value
-        else {
+        if (isArray(value)) {
+          args = value
+        } else {
           kwargs = Object.assign({}, value)
+
           if ('_' in value) {
             args = value._
             delete kwargs._
+          }
+
+          if (format != null && isArray(format.args)) {
+            format.args.forEach(argKey => {
+              args.unshift(kwargs[argKey])
+              delete kwargs[argKey]
+            })
           }
         }
 
@@ -191,7 +204,7 @@ function Sexprs (options = {}) {
           strings.push(`${stringify(kwargs, depth + 1)}`)
         }
 
-        //strings.push(`${indent(depth)})`)
+        // strings.push(`${indent(depth)})`)
         strings.push(`${indent(depth)})`)
       }
       strings.push('\n')
@@ -210,14 +223,14 @@ function maybeQuoteString (value) {
   if (isSymbolRe.test(value)) {
     return `${value}`
   } else {
-    return`"${value}"`
+    return `"${value}"`
   }
 }
 
 function isString (object) {
   return typeof object === 'string'
 }
-  
+
 function isNumber (object) {
   return typeof object === 'number'
 }

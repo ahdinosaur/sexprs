@@ -53,7 +53,10 @@ test('parse with defaults', function (t) {
       Mikey
       (version 1.0.0)
       (website http://dinosaur.is)
-      (location 121 121)
+      (location
+        121
+        121
+      )
       (likes
         (name chocolate)
       )

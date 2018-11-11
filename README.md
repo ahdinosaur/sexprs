@@ -1,7 +1,5 @@
 # sexprs
 
-_work in progress_
-
 parse and format S-expressions as JavaScript objects
 
 ```shell
