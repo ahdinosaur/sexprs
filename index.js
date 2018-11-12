@@ -193,11 +193,13 @@ function Sexprs (options = {}) {
           }
 
           if (operator != null && isArray(operator.args)) {
+            var operatorArgs = []
             for (var argKey of operator.args) {
               if (!(argKey in kwargs)) break
-              args.unshift(kwargs[argKey])
+              operatorArgs.push(kwargs[argKey])
               delete kwargs[argKey]
             }
+            args = [...operatorArgs, ...args]
           }
         }
 

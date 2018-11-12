@@ -54,8 +54,8 @@ test('basic operators', function (t) {
       (version 1.0.0)
       (website http://dinosaur.is)
       (location
-        121
-        121
+        100
+        200
       )
       (likes
         (name chocolate)
@@ -71,7 +71,7 @@ test('basic operators', function (t) {
       name: 'Mikey',
       version: '1.0.0',
       website: 'http://dinosaur.is',
-      location: { lat: 121, long: 121 },
+      location: { lat: 100, long: 200 },
       likes: [
         { name: 'chocolate' },
         { name: 'JavaScript' }
@@ -97,19 +97,19 @@ test('hasMany', function (t) {
     (points
       (xy
         0
-        0
-      )
-      (xy
-        1
         1
       )
       (xy
-        2
+        1
         2
       )
       (xy
+        2
         3
+      )
+      (xy
         3
+        4
       )
     )
   `
@@ -117,10 +117,10 @@ test('hasMany', function (t) {
   var expectedObject = {
     points: {
       xy: [
-        [0, 0],
-        [1, 1],
-        [2, 2],
-        [3, 3]
+        [0, 1],
+        [1, 2],
+        [2, 3],
+        [3, 4]
       ]
     }
   }
