@@ -85,6 +85,52 @@ test('basic operators', function (t) {
   t.deepEqual(string, expectedString)
 })
 
+test('hasMany', function (t) {
+  var sexprs = Sexprs({
+    operators: {
+      xy: {
+        hasMany: true
+      }
+    }
+  })
+  var inputString = dent`
+    (points
+      (xy
+        0
+        0
+      )
+      (xy
+        1
+        1
+      )
+      (xy
+        2
+        2
+      )
+      (xy
+        3
+        3
+      )
+    )
+  `
+  var object = sexprs.parse(inputString)
+  var expectedObject = {
+    points: {
+      xy: [
+        [0, 0],
+        [1, 1],
+        [2, 2],
+        [3, 3]
+      ]
+    }
+  }
+  t.deepEqual(object, expectedObject)
+
+  var string = sexprs.stringify(expectedObject)
+  var expectedString = inputString + '\n'
+  t.deepEqual(string, expectedString)
+})
+
 test('hasMany(path)', function (t) {
   var sexprs = Sexprs({
     operators: {

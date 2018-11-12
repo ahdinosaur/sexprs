@@ -155,7 +155,7 @@ function Sexprs (options = {}) {
     return object
   }
 
-  function stringify (object, path = []) {
+  function stringify (object, path = [], hadMany = false) {
     if (isString(object)) {
       return indent(path.length) + maybeQuoteString(object)
     } else if (isNumber(object)) {
@@ -165,9 +165,9 @@ function Sexprs (options = {}) {
     var strings = []
     for (let [key, value] of Object.entries(object)) {
       const operator = operators[key]
-      if (hasMany(operator, [...path, key]) && isArray(value)) {
+      if (hasMany(operator, [...path, key]) && !hadMany) {
         value.forEach(item => {
-          strings.push(`${stringify({ [key]: item }, path)}`)
+          strings.push(`${stringify({ [key]: item }, path, true)}`)
         })
         continue
       }
@@ -193,10 +193,11 @@ function Sexprs (options = {}) {
           }
 
           if (operator != null && isArray(operator.args)) {
-            operator.args.forEach(argKey => {
+            for (var argKey of operator.args) {
+              if (!(argKey in kwargs)) break
               args.unshift(kwargs[argKey])
               delete kwargs[argKey]
-            })
+            }
           }
         }
 
