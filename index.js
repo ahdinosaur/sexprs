@@ -127,9 +127,11 @@ function Sexprs (options = {}) {
         var nextValue = token.value
 
         // convert value to number, if possible
-        var numericValue = Number(nextValue)
-        if (!isNaN(numericValue)) {
-          nextValue = numericValue
+        if (nextValue !== '') {
+          var numericValue = Number(nextValue)
+          if (!isNaN(numericValue)) {
+            nextValue = numericValue
+          }
         }
 
         // get current level

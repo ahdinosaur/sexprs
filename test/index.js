@@ -128,3 +128,15 @@ test('hasMany(path)', function (t) {
   var expectedString = inputString + '\n'
   t.deepEqual(string, expectedString)
 })
+
+test('empty string', function (t) {
+  var sexprs = Sexprs()
+  var inputString = '(name "")'
+  var object = sexprs.parse(inputString)
+  var expectedObject = { name: '' }
+  t.deepEqual(object, expectedObject)
+
+  var string = sexprs.stringify(expectedObject)
+  var expectedString = inputString + '\n'
+  t.deepEqual(string, expectedString)
+})
