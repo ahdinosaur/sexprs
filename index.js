@@ -156,7 +156,9 @@ function Sexprs (options = {}) {
   }
 
   function stringify (object, path = [], hadMany = false) {
-    if (isString(object)) {
+    if (isNil(object)) {
+      return `${indent(path.length)}()`
+    } else if (isString(object)) {
       return indent(path.length) + maybeQuoteString(object)
     } else if (isNumber(object)) {
       return indent(path.length) + object.toString()
@@ -249,4 +251,8 @@ function isString (object) {
 
 function isNumber (object) {
   return typeof object === 'number'
+}
+
+function isNil (object) {
+  return object == null
 }
